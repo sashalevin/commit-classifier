@@ -78,6 +78,7 @@ pub enum LlmProvider {
     Ollama,
     Exec,
     Kiro,
+    Goose,
 }
 
 impl fmt::Display for LlmProvider {
@@ -89,6 +90,7 @@ impl fmt::Display for LlmProvider {
             LlmProvider::Ollama => write!(f, "ollama"),
             LlmProvider::Exec => write!(f, "exec"),
             LlmProvider::Kiro => write!(f, "kiro"),
+            LlmProvider::Goose => write!(f, "goose"),
         }
     }
 }
@@ -102,6 +104,7 @@ impl LlmProvider {
             "ollama" => Ok(LlmProvider::Ollama),
             "exec" => Ok(LlmProvider::Exec),
             "kiro" => Ok(LlmProvider::Kiro),
+            "goose" => Ok(LlmProvider::Goose),
             _ => Err(LlmError::Config(format!("Unsupported LLM provider: {}", name))),
         }
     }
@@ -154,6 +157,11 @@ impl LlmFactory {
                 let config = KiroConfig::from_json(config)?;
                 Ok(Box::new(KiroLlm::new(config)?))
             },
+            LlmProvider::Goose => {
+                use crate::llm::goose::{GooseConfig, GooseLlm};
+                let config = GooseConfig::from_json(config)?;
+                Ok(Box::new(GooseLlm::new(config)?))
+            },
         }
     }
 }
@@ -170,6 +178,7 @@ mod tests {
         assert_eq!(format!("{}", LlmProvider::Ollama), "ollama");
         assert_eq!(format!("{}", LlmProvider::Exec), "exec");
         assert_eq!(format!("{}", LlmProvider::Kiro), "kiro");
+        assert_eq!(format!("{}", LlmProvider::Goose), "goose");
     }
 
     #[test]
@@ -181,6 +190,7 @@ mod tests {
         assert_eq!(LlmProvider::from_name("ollama").unwrap(), LlmProvider::Ollama);
         assert_eq!(LlmProvider::from_name("exec").unwrap(), LlmProvider::Exec);
         assert_eq!(LlmProvider::from_name("kiro").unwrap(), LlmProvider::Kiro);
+        assert_eq!(LlmProvider::from_name("goose").unwrap(), LlmProvider::Goose);
 
         // Test case insensitivity
         assert_eq!(LlmProvider::from_name("Claude").unwrap(), LlmProvider::Claude);
@@ -189,6 +199,7 @@ mod tests {
         assert_eq!(LlmProvider::from_name("OlLaMa").unwrap(), LlmProvider::Ollama);
         assert_eq!(LlmProvider::from_name("ExEc").unwrap(), LlmProvider::Exec);
         assert_eq!(LlmProvider::from_name("Kiro").unwrap(), LlmProvider::Kiro);
+        assert_eq!(LlmProvider::from_name("GoOsE").unwrap(), LlmProvider::Goose);
 
         // Test aliases
         assert_eq!(LlmProvider::from_name("gpt4").unwrap(), LlmProvider::OpenAI);

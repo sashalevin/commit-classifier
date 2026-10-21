@@ -20,6 +20,7 @@ mod response;
 mod models;
 mod exec;
 mod kiro;
+mod goose;
 
 // Re-exports
 pub use provider::LlmFactory;

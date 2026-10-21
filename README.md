@@ -18,8 +18,35 @@ copies of these files.
 | OpenAI | `openai` | `OPENAI_API_KEY` |
 | NVIDIA | `nvidia` | `NVIDIA_API_KEY` |
 | Kiro CLI | `kiro` | `KIRO_API_KEY`, or an authenticated `kiro-cli` session |
+| goose CLI | `goose` | whatever the goose provider needs (see below) |
 | Ollama | `ollama` | none, talks to a local server |
 | Exec | `exec` | none, runs a local binary as the model |
+
+### goose
+
+The `goose` provider runs `goose run --no-session --quiet --output-format json`
+with the prompt on stdin and returns the assistant's text. goose picks the
+model backend, so its usual environment applies (`GOOSE_PROVIDER`,
+`GOOSE_MODEL`, `OPENAI_HOST`, ...). An OpenAI-compatible local server such as
+vLLM works through goose's `openai` provider:
+
+```
+GOOSE_PROVIDER=openai GOOSE_MODEL=OpenVINO/Qwen3-8B-int4-ov \
+OPENAI_HOST=http://localhost:8000 OPENAI_API_KEY=unused ...
+```
+
+goose always offers the model at least one tool, so the server must accept
+tool calls (`vllm serve ... --enable-auto-tool-choice --tool-call-parser hermes`
+for Qwen3). For a server without tool calling set `GOOSE_TOOLSHIM=true`.
+
+JSON config keys, all optional: `binary` (default `goose`), `provider`,
+`model`, `builtins` (extensions passed to `--with-builtin`, e.g.
+`["developer"]` to let the agent run shell commands; none by default),
+`no_profile` (default `true`, so the user's default extensions are not
+loaded), `max_turns`, `cwd`, `mode` (sets `GOOSE_MODE`), `env` (extra
+environment for the goose process) and `timeout_secs` (default 600).
+`temperature` and `max_tokens` are forwarded as `GOOSE_TEMPERATURE` and
+`GOOSE_MAX_TOKENS` only when set explicitly.
 
 ## Embeddings
 
@@ -34,7 +61,7 @@ cargo build
 cargo test
 ```
 
-The test suite is 66 unit tests. None of them need network access or API keys;
+The test suite is 74 unit tests. None of them need network access or API keys;
 credentials are only used for real classification runs.
 
 Optional CUDA support for embeddings:
